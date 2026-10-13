@@ -1,221 +1,112 @@
-from pathlib import Path
-
-html = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora de Calorias e Carboidratos</title>
+<title>Calculadora diária de carboidratos</title>
 <style>
-  :root { --ink:#29243a; --muted:#716b80; --accent:#8064b5; --accent2:#eee7f8; --line:#e4deed; --bg:#faf8fd; --white:#fff; }
+  :root { --lavender:#8b79c6; --lavender-dark:#6653a5; --ink:#302b3b; --muted:#6d6878; --line:#e6e0f2; }
   * { box-sizing:border-box; }
-  body { margin:0; padding:24px 14px; background:linear-gradient(180deg,#f4effb 0,#fbfaff 260px); color:var(--ink); font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-  .wrap { max-width:760px; margin:auto; }
-  header { text-align:center; margin:8px auto 24px; }
-  .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.13em; font-weight:750; font-size:.76rem; }
-  h1 { font-size:clamp(1.7rem,4vw,2.4rem); margin:8px 0; line-height:1.12; }
-  header p { color:var(--muted); margin:0 auto; max-width:560px; line-height:1.55; }
-  .card { background:var(--white); border:1px solid var(--line); border-radius:20px; padding:clamp(18px,4vw,28px); box-shadow:0 12px 35px #38235b0c; margin-bottom:16px; }
-  .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
-  label { display:block; font-size:.9rem; font-weight:700; margin-bottom:7px; }
-  input,select { width:100%; padding:12px 13px; border:1px solid #d8d0e5; border-radius:11px; background:#fff; color:var(--ink); font:inherit; }
-  input:focus,select:focus { outline:3px solid #8064b526; border-color:var(--accent); }
-  .hint { color:var(--muted); font-size:.79rem; line-height:1.4; margin-top:6px; }
-  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:20px; }
-  button { border:0; border-radius:12px; padding:12px 18px; font:inherit; font-weight:750; cursor:pointer; }
-  .primary { background:var(--accent); color:#fff; flex:1; }
-  .secondary { background:var(--accent2); color:var(--ink); }
-  .results { display:none; }
-  .results.show { display:block; }
-  .result-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }
-  .metric { padding:15px 12px; border-radius:14px; background:var(--bg); border:1px solid var(--line); }
-  .metric span { display:block; color:var(--muted); font-size:.8rem; line-height:1.3; }
-  .metric strong { display:block; font-size:clamp(1.35rem,3.5vw,1.8rem); margin-top:8px; }
-  .metric small { color:var(--muted); }
-  .bar { height:12px; display:flex; overflow:hidden; border-radius:999px; margin:16px 0 8px; background:#eee; }
-  .bar div { height:100%; }
-  .legend { display:flex; flex-wrap:wrap; gap:12px; font-size:.82rem; color:var(--muted); }
-  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
-  .formula { background:#f8f5fc; border-left:4px solid var(--accent); border-radius:8px; padding:13px 15px; line-height:1.55; font-size:.92rem; margin-top:16px; }
-  .notice { color:#625a70; font-size:.84rem; line-height:1.55; }
-  .error { display:none; color:#a12646; background:#fff0f3; padding:10px 12px; border-radius:10px; margin-top:12px; font-size:.9rem; }
-  footer { text-align:center; color:var(--muted); font-size:.78rem; padding:4px 8px 20px; line-height:1.5; }
-  @media(max-width:560px) { .grid { grid-template-columns:1fr; gap:13px; } .result-grid { grid-template-columns:1fr; } .metric { display:flex; align-items:center; justify-content:space-between; gap:12px; } .metric strong { margin:0; } }
+  body { margin:0; padding:24px 14px; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:linear-gradient(145deg,#f5f1ff,#f9fbff); color:var(--ink); }
+  .wrap { max-width:680px; margin:auto; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:22px; padding:clamp(20px,5vw,34px); box-shadow:0 12px 36px rgba(74,55,125,.09); }
+  .eyebrow { color:var(--lavender-dark); font-size:.78rem; letter-spacing:.12em; font-weight:800; text-transform:uppercase; }
+  h1 { margin:8px 0; font-size:clamp(1.65rem,5vw,2.25rem); line-height:1.15; }
+  .intro { margin:0 0 24px; color:var(--muted); line-height:1.55; }
+  .field { margin:18px 0; }
+  label { display:block; font-weight:700; margin-bottom:8px; }
+  input, select { width:100%; border:1px solid #d9d1eb; border-radius:12px; padding:13px 14px; font:inherit; color:var(--ink); background:#fff; }
+  input:focus, select:focus { outline:3px solid #e8e1ff; border-color:var(--lavender); }
+  .hint { color:var(--muted); font-size:.85rem; margin-top:6px; }
+  button { width:100%; margin-top:8px; border:0; border-radius:13px; padding:14px 18px; font:inherit; font-weight:800; color:#fff; background:var(--lavender-dark); cursor:pointer; }
+  button:hover { background:#55428f; }
+  .result { margin-top:24px; padding:20px; background:#f5f1ff; border:1px solid #e4dcfa; border-radius:16px; display:none; }
+  .result.show { display:block; }
+  .result-label { color:var(--muted); font-size:.9rem; }
+  .big { font-size:clamp(2.1rem,8vw,3rem); color:var(--lavender-dark); font-weight:850; line-height:1.15; margin:5px 0 14px; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat { background:#fff; border-radius:12px; padding:12px; }
+  .stat strong { display:block; font-size:1.15rem; margin-top:4px; }
+  .formula { margin-top:16px; padding:14px; background:#fbfaff; border-left:3px solid var(--lavender); border-radius:8px; font-size:.9rem; line-height:1.55; }
+  .note { margin-top:20px; font-size:.83rem; line-height:1.55; color:var(--muted); }
+  .error { color:#a32d43; font-size:.9rem; margin-top:10px; display:none; }
+  @media(max-width:480px) { .stats { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Nutrição • estimativa inicial</div>
-    <h1>Calculadora de calorias e carboidratos</h1>
-    <p>Informe seus dados para estimar o gasto energético diário e calcular uma meta inicial de carboidratos.</p>
-  </header>
-
-  <form id="calcForm" class="card">
-    <div class="grid">
-      <div>
-        <label for="weight">Peso atual (kg)</label>
-        <input id="weight" type="number" min="25" max="350" step="0.1" value="57" required>
-      </div>
-      <div>
-        <label for="height">Altura (cm)</label>
-        <input id="height" type="number" min="120" max="230" step="1" value="158" required>
-      </div>
-      <div>
-        <label for="age">Idade (anos)</label>
-        <input id="age" type="number" min="18" max="100" step="1" value="25" required>
-      </div>
-      <div>
-        <label for="sex">Equação fisiológica</label>
-        <select id="sex" required>
-          <option value="female">Feminina</option>
-          <option value="male">Masculina</option>
-        </select>
-        <div class="hint">Usada pela equação de Mifflin–St Jeor.</div>
-      </div>
-      <div>
-        <label for="activity">Nível de atividade</label>
-        <select id="activity">
-          <option value="1.2">Sedentário — pouco exercício</option>
-          <option value="1.375">Levemente ativo — 1 a 3 dias/semana</option>
-          <option value="1.55" selected>Moderadamente ativo — 3 a 5 dias/semana</option>
-          <option value="1.725">Muito ativo — 6 a 7 dias/semana</option>
-          <option value="1.9">Extremamente ativo — trabalho físico/treino intenso</option>
-        </select>
-      </div>
-      <div>
-        <label for="goal">Objetivo</label>
-        <select id="goal">
-          <option value="-15">Perda de gordura (déficit moderado)</option>
-          <option value="0" selected>Manutenção / recomposição</option>
-          <option value="8">Ganho gradual de massa</option>
-        </select>
-        <div class="hint">Ajuste aproximado em relação às calorias de manutenção.</div>
-      </div>
-      <div>
-        <label for="protein">Proteína desejada (g/kg)</label>
-        <select id="protein">
-          <option value="1.2">1,2 g/kg</option>
-          <option value="1.4">1,4 g/kg</option>
-          <option value="1.6" selected>1,6 g/kg</option>
-          <option value="1.8">1,8 g/kg</option>
-          <option value="2">2,0 g/kg</option>
-          <option value="2.2">2,2 g/kg</option>
-        </select>
-      </div>
-      <div>
-        <label for="fat">Gordura (% das calorias)</label>
-        <select id="fat">
-          <option value="20">20%</option>
-          <option value="25" selected>25%</option>
-          <option value="30">30%</option>
-          <option value="35">35%</option>
-        </select>
-      </div>
-    </div>
-    <div id="error" class="error" role="alert"></div>
-    <div class="actions">
-      <button type="submit" class="primary">Calcular minha meta</button>
-      <button type="reset" class="secondary">Restaurar valores</button>
-    </div>
-  </form>
-
-  <section id="results" class="card results" aria-live="polite">
-    <div class="eyebrow">Seu resultado estimado</div>
-    <div class="result-grid">
-      <div class="metric"><span>Metabolismo basal</span><strong id="bmr">—</strong><small>kcal/dia</small></div>
-      <div class="metric"><span>Manutenção estimada</span><strong id="maintenance">—</strong><small>kcal/dia</small></div>
-      <div class="metric"><span>Meta calórica diária</span><strong id="target">—</strong><small>kcal/dia</small></div>
-      <div class="metric"><span>Carboidratos</span><strong id="carbs">—</strong><small>g/dia</small></div>
-      <div class="metric"><span>Proteínas</span><strong id="proteinResult">—</strong><small>g/dia</small></div>
-      <div class="metric"><span>Gorduras</span><strong id="fatResult">—</strong><small>g/dia</small></div>
-    </div>
-    <div class="bar" aria-label="Distribuição estimada de macronutrientes">
-      <div id="carbBar" style="background:#8b6bc1;width:50%"></div>
-      <div id="proteinBar" style="background:#e8a4c4;width:25%"></div>
-      <div id="fatBar" style="background:#efc66d;width:25%"></div>
-    </div>
-    <div class="legend">
-      <span><i class="dot" style="background:#8b6bc1"></i>Carboidratos</span>
-      <span><i class="dot" style="background:#e8a4c4"></i>Proteínas</span>
-      <span><i class="dot" style="background:#efc66d"></i>Gorduras</span>
-    </div>
-    <div class="formula" id="mathBreakdown"></div>
-  </section>
-
+<main class="wrap">
   <section class="card">
-    <h2 style="font-size:1.12rem;margin:0 0 10px">Como a calculadora funciona</h2>
-    <p class="notice"><strong>1. Metabolismo basal:</strong> estima a energia usada pelo corpo em repouso pela equação de Mifflin–St Jeor.</p>
-    <p class="notice"><strong>2. Calorias diárias:</strong> multiplica o metabolismo basal por um fator de atividade e aplica um ajuste aproximado conforme o objetivo.</p>
-    <p class="notice"><strong>3. Carboidratos:</strong> desconta as calorias de proteínas e gorduras da meta diária. Cada grama de carboidrato fornece 4 kcal; proteína, 4 kcal/g; gordura, 9 kcal/g.</p>
-    <p class="notice"><strong>Importante:</strong> são estimativas, não uma prescrição nutricional. O gasto real varia entre pessoas e deve ser ajustado com acompanhamento e observação da evolução. Para menores de 18 anos, gestantes, lactantes ou pessoas com condições clínicas/medicamentos que afetem apetite e alimentação, procure orientação profissional. Não use o resultado para impor restrição alimentar excessiva.</p>
+    <div class="eyebrow">Nutrição • cálculo estimado</div>
+    <h1>Calculadora de carboidratos</h1>
+    <p class="intro">Informe o sexo e o peso corporal para estimar as calorias diárias e a quantidade correspondente de carboidratos.</p>
+
+    <div class="field">
+      <label for="sexo">Sexo</label>
+      <select id="sexo">
+        <option value="feminino">Feminino</option>
+        <option value="masculino">Masculino</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="peso">Peso corporal (kg)</label>
+      <input id="peso" type="number" min="1" max="500" step="0.1" placeholder="Ex.: 68,5" inputmode="decimal">
+    </div>
+
+    <button type="button" id="calcular">Calcular quantidade diária</button>
+    <div class="error" id="erro" role="alert">Digite um peso válido maior que zero.</div>
+
+    <section class="result" id="resultado" aria-live="polite">
+      <div class="result-label">Carboidratos estimados por dia</div>
+      <div class="big" id="gramas">— g/dia</div>
+      <div class="stats">
+        <div class="stat"><span class="result-label">Energia estimada</span><strong id="calorias">— kcal/dia</strong></div>
+        <div class="stat"><span class="result-label">Carboidratos por peso</span><strong id="porpeso">— g/kg/dia</strong></div>
+      </div>
+      <div class="formula" id="conta"></div>
+    </section>
+
+    <p class="note"><strong>Importante:</strong> o cálculo utiliza uma estimativa fixa de 30 kcal por kg de peso corporal por dia e considera 50% dessa energia para carboidratos no feminino e 70% no masculino, conforme os parâmetros definidos para esta calculadora. Isso não significa que essas proporções sejam recomendações universais para cada sexo. A necessidade energética real varia com idade, altura, atividade física, objetivos e condições clínicas. Para orientação individualizada, procure um nutricionista ou profissional de saúde habilitado.</p>
   </section>
-  <footer>Ferramenta educativa • As estimativas não substituem avaliação individual por nutricionista ou profissional de saúde.</footer>
-</div>
+</main>
 <script>
 (function () {
-  const form = document.getElementById('calcForm');
-  const results = document.getElementById('results');
-  const error = document.getElementById('error');
-  const byId = id => document.getElementById(id);
-  const round = n => Math.round(n);
-  function calculate(event) {
-    if (event) event.preventDefault();
-    error.style.display = 'none';
-    const weight = Number(byId('weight').value);
-    const height = Number(byId('height').value);
-    const age = Number(byId('age').value);
-    const sex = byId('sex').value;
-    const activity = Number(byId('activity').value);
-    const goal = Number(byId('goal').value);
-    const proteinPerKg = Number(byId('protein').value);
-    const fatPercent = Number(byId('fat').value) / 100;
-    if (!(weight >= 25 && weight <= 350 && height >= 120 && height <= 230 && age >= 18 && age <= 100)) {
-      error.textContent = 'Confira peso, altura e idade. Esta calculadora foi configurada para adultos a partir de 18 anos.';
-      error.style.display = 'block'; results.classList.remove('show'); return;
+  const peso = document.getElementById('peso');
+  const sexo = document.getElementById('sexo');
+  const resultado = document.getElementById('resultado');
+  const erro = document.getElementById('erro');
+  const fmt = (n, casas=0) => n.toLocaleString('pt-BR', {minimumFractionDigits:casas, maximumFractionDigits:casas});
+
+  function calcular() {
+    const p = Number(String(peso.value).replace(',', '.'));
+    if (!Number.isFinite(p) || p <= 0 || p > 500) {
+      erro.style.display = 'block';
+      resultado.classList.remove('show');
+      peso.setAttribute('aria-invalid', 'true');
+      return;
     }
-    // Mifflin–St Jeor: estimates resting energy expenditure.
-    const bmr = 10 * weight + 6.25 * height - 5 * age + (sex === 'male' ? 5 : -161);
-    const maintenance = bmr * activity;
-    const target = maintenance * (1 + goal / 100);
-    const proteinG = weight * proteinPerKg;
-    const proteinKcal = proteinG * 4;
-    const fatKcal = target * fatPercent;
-    const fatG = fatKcal / 9;
-    const carbKcal = target - proteinKcal - fatKcal;
-    if (carbKcal < 0) {
-      error.textContent = 'Com essas escolhas, proteína e gordura ocupam mais calorias do que a meta diária. Escolha uma meta calórica maior ou ajuste os macronutrientes.';
-      error.style.display = 'block'; results.classList.remove('show'); return;
-    }
-    const carbG = carbKcal / 4;
-    byId('bmr').textContent = round(bmr).toLocaleString('pt-BR');
-    byId('maintenance').textContent = round(maintenance).toLocaleString('pt-BR');
-    byId('target').textContent = round(target).toLocaleString('pt-BR');
-    byId('carbs').textContent = round(carbG).toLocaleString('pt-BR');
-    byId('proteinResult').textContent = round(proteinG).toLocaleString('pt-BR');
-    byId('fatResult').textContent = round(fatG).toLocaleString('pt-BR');
-    byId('carbBar').style.width = (carbKcal / target * 100) + '%';
-    byId('proteinBar').style.width = (proteinKcal / target * 100) + '%';
-    byId('fatBar').style.width = (fatKcal / target * 100) + '%';
-    byId('mathBreakdown').innerHTML =
-      '<strong>Conta dos carboidratos:</strong><br>' +
-      round(target).toLocaleString('pt-BR') + ' kcal − ' +
-      round(proteinKcal).toLocaleString('pt-BR') + ' kcal de proteína − ' +
-      round(fatKcal).toLocaleString('pt-BR') + ' kcal de gordura = ' +
-      round(carbKcal).toLocaleString('pt-BR') + ' kcal restantes ÷ 4 = <strong>' +
-      round(carbG).toLocaleString('pt-BR') + ' g de carboidratos/dia</strong>.';
-    results.classList.add('show');
-    results.scrollIntoView({behavior:'smooth', block:'start'});
+    erro.style.display = 'none';
+    peso.removeAttribute('aria-invalid');
+
+    const fatorKcal = 30;
+    const pct = sexo.value === 'masculino' ? 0.70 : 0.50;
+    const caloriasDia = p * fatorKcal;
+    const kcalCarbo = caloriasDia * pct;
+    const gramas = kcalCarbo / 4;
+    const gkg = gramas / p;
+
+    document.getElementById('gramas').textContent = fmt(gramas) + ' g/dia';
+    document.getElementById('calorias').textContent = fmt(caloriasDia) + ' kcal/dia';
+    document.getElementById('porpeso').textContent = fmt(gkg, 1) + ' g/kg/dia';
+    document.getElementById('conta').innerHTML =
+      '<strong>Como foi calculado:</strong><br>' +
+      '1. Energia estimada: ' + fmt(p,1) + ' kg × 30 kcal/kg = <strong>' + fmt(caloriasDia) + ' kcal/dia</strong>.<br>' +
+      '2. Percentual aplicado (' + (pct*100) + '%): ' + fmt(caloriasDia) + ' × ' + (pct*100) + '% = ' + fmt(kcalCarbo) + ' kcal.<br>' +
+      '3. Carboidratos: ' + fmt(kcalCarbo) + ' ÷ 4 kcal/g = <strong>' + fmt(gramas) + ' g/dia</strong>.';
+    resultado.classList.add('show');
   }
-  form.addEventListener('submit', calculate);
-  form.addEventListener('reset', function () {
-    setTimeout(function () { results.classList.remove('show'); error.style.display = 'none'; }, 0);
-  });
-  calculate();
+  document.getElementById('calcular').addEventListener('click', calcular);
+  peso.addEventListener('keydown', e => { if (e.key === 'Enter') calcular(); });
 })();
 </script>
 </body>
-</html>'''
-path = Path("/mnt/data/calculadora_calorias_carboidratos.html")
-path.write_text(html, encoding="utf-8")
-print(f"Arquivo criado: {path} ({path.stat().st_size} bytes)")
+</html>
