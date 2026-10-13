@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Carboidratos</title>
+<style>
+  :root {
+    --bg: #f7f4fb;
+    --card: #ffffff;
+    --ink: #29243a;
+    --muted: #746e82;
+    --accent: #8064b8;
+    --accent-dark: #64469c;
+    --soft: #eee7f8;
+    --line: #e6dfef;
+    --danger: #a33d56;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 28px 16px;
+    display: grid; place-items: center;
+    background: radial-gradient(circle at top left, #eee6fa, transparent 42%), var(--bg);
+    color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .app { width: min(100%, 560px); }
+  .eyebrow { color: var(--accent-dark); font-size: .76rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  h1 { margin: 8px 0 8px; font-size: clamp(1.8rem, 6vw, 2.35rem); line-height: 1.12; }
+  .intro { color: var(--muted); line-height: 1.55; margin: 0 0 22px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: clamp(20px, 5vw, 30px); box-shadow: 0 14px 40px #35244d12; }
+  .fields { display: grid; gap: 17px; }
+  label { display: block; font-size: .92rem; font-weight: 700; margin-bottom: 7px; }
+  .hint { display: block; color: var(--muted); font-size: .8rem; font-weight: 400; margin-top: 3px; }
+  .input-wrap { position: relative; }
+  input {
+    width: 100%; padding: 13px 48px 13px 14px; border: 1px solid #d8d0e5;
+    border-radius: 12px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem;
+    outline: none; transition: border .15s, box-shadow .15s;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #8064b822; }
+  .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .9rem; pointer-events: none; }
+  button { cursor: pointer; border: 0; border-radius: 12px; font: inherit; font-weight: 750; padding: 13px 16px; }
+  .calculate { width: 100%; margin-top: 22px; color: white; background: var(--accent); }
+  .calculate:hover { background: var(--accent-dark); }
+  .reset { color: var(--accent-dark); background: var(--soft); }
+  .result { display: none; margin-top: 22px; padding: 20px; border-radius: 16px; background: #f3eefb; border: 1px solid #e1d5f3; }
+  .result.show { display: block; }
+  .result-label { font-size: .82rem; color: var(--muted); font-weight: 700; }
+  .number { color: var(--accent-dark); font-size: clamp(2.4rem, 9vw, 3.3rem); font-weight: 850; letter-spacing: -.04em; line-height: 1.15; margin: 5px 0 10px; }
+  .breakdown { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 17px; }
+  .metric { background: #fff; padding: 11px; border-radius: 12px; border: 1px solid var(--line); }
+  .metric strong { display: block; font-size: 1rem; }
+  .metric span { color: var(--muted); font-size: .75rem; }
+  .error { display: none; margin-top: 12px; color: var(--danger); font-size: .9rem; }
+  .error.show { display: block; }
+  .formula { margin-top: 20px; padding: 15px; border-radius: 14px; background: #fbf9fe; border: 1px dashed #d9cde9; color: var(--muted); font-size: .9rem; line-height: 1.55; }
+  .formula strong { color: var(--ink); }
+  .note { margin: 17px 2px 0; color: var(--muted); font-size: .82rem; line-height: 1.55; }
+  .actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+  @media (max-width: 420px) { .breakdown { grid-template-columns: 1fr; } .metric { display: flex; justify-content: space-between; align-items: center; } }
+
+  /* Ajustes para celular */
+  @media (max-width: 600px) {
+    body { display: block; padding: 16px 12px 28px; }
+    .app { width: 100%; max-width: 480px; margin: 0 auto; }
+    .eyebrow { font-size: .7rem; }
+    h1 { font-size: clamp(1.7rem, 8vw, 2.1rem); margin-top: 7px; }
+    .intro { font-size: .94rem; margin-bottom: 16px; }
+    .card { padding: 18px 15px; border-radius: 18px; }
+    .fields { gap: 15px; }
+    label { font-size: .9rem; }
+    input { min-height: 50px; font-size: 16px; padding: 13px 48px 13px 12px; }
+    button { min-height: 48px; }
+    .calculate { margin-top: 18px; }
+    .result { padding: 16px 13px; margin-top: 17px; }
+    .number { font-size: clamp(2.3rem, 12vw, 3rem); }
+    .breakdown { grid-template-columns: 1fr; gap: 7px; }
+    .metric { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; }
+    .metric strong { font-size: .95rem; }
+    .metric span { text-align: right; }
+    .actions button { width: 100%; }
+    .formula { padding: 13px; font-size: .86rem; }
+    .note { font-size: .8rem; }
+  }
+  @media (max-width: 350px) {
+    body { padding-left: 9px; padding-right: 9px; }
+    .card { padding: 15px 12px; }
+    .number { font-size: 2.2rem; }
+  }
+
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="eyebrow">Nutrição • calculadora simples</div>
+  <h1>Calculadora de carboidratos</h1>
+  <p class="intro">Descubra quantos gramas de carboidratos completam sua meta diária de calorias, considerando proteínas e gorduras.</p>
+
+  <section class="card" aria-label="Calculadora">
+    <form id="calculator">
+      <div class="fields">
+        <div>
+          <label for="calories">Meta de calorias por dia <span class="hint">Sua meta energética diária total</span></label>
+          <div class="input-wrap"><input id="calories" type="number" min="1" max="10000" step="1" value="1600" required><span class="unit">kcal</span></div>
+        </div>
+        <div>
+          <label for="protein">Proteínas por dia <span class="hint">Ex.: carnes, ovos, leite e leguminosas</span></label>
+          <div class="input-wrap"><input id="protein" type="number" min="0" max="1000" step="1" value="100" required><span class="unit">g</span></div>
+        </div>
+        <div>
+          <label for="fat">Gorduras por dia <span class="hint">Inclua as gorduras de todos os alimentos</span></label>
+          <div class="input-wrap"><input id="fat" type="number" min="0" max="1000" step="1" value="50" required><span class="unit">g</span></div>
+        </div>
+      </div>
+      <button class="calculate" type="submit">Calcular carboidratos</button>
+      <p class="error" id="error" role="alert"></p>
+    </form>
+
+    <div class="result show" id="result" aria-live="polite">
+      <div class="result-label">Carboidratos calculados por dia</div>
+      <div class="number"><span id="carbValue">137,5</span> <span style="font-size:1.1rem;letter-spacing:0">g</span></div>
+      <div>Essa quantidade corresponde às calorias restantes depois de contabilizar proteínas e gorduras.</div>
+      <div class="breakdown">
+        <div class="metric"><strong id="proteinKcal">400 kcal</strong><span>Proteínas</span></div>
+        <div class="metric"><strong id="fatKcal">450 kcal</strong><span>Gorduras</span></div>
+        <div class="metric"><strong id="carbKcal">550 kcal</strong><span>Carboidratos</span></div>
+      </div>
+      <div class="actions"><button class="reset" id="reset" type="button">Restaurar exemplo</button></div>
+    </div>
+
+    <div class="formula"><strong>Como funciona a conta?</strong><br>
+      Carboidratos (g) = [calorias diárias − (proteínas × 4) − (gorduras × 9)] ÷ 4.<br>
+      Cada grama de proteína ou carboidrato fornece aproximadamente 4 kcal; cada grama de gordura, 9 kcal.
+    </div>
+  </section>
+
+  <p class="note"><strong>Importante:</strong> a calculadora faz uma divisão matemática de calorias, não define por si só sua necessidade nutricional. A meta de calorias e a distribuição de macros devem ser adequadas ao seu objetivo, rotina, saúde e orientação profissional. Se o resultado for negativo, as metas de proteína e gordura ultrapassam as calorias informadas.</p>
+</main>
+<script>
+  const form = document.getElementById('calculator');
+  const caloriesInput = document.getElementById('calories');
+  const proteinInput = document.getElementById('protein');
+  const fatInput = document.getElementById('fat');
+  const result = document.getElementById('result');
+  const error = document.getElementById('error');
+
+  function fmt(value) {
+    return value.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  }
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault();
+    const calories = Number(caloriesInput.value);
+    const protein = Number(proteinInput.value);
+    const fat = Number(fatInput.value);
+    const values = [calories, protein, fat];
+
+    if (values.some(v => !Number.isFinite(v) || v < 0) || calories <= 0 ||
+        caloriesInput.value === '' || proteinInput.value === '' || fatInput.value === '') {
+      error.textContent = 'Preencha todos os campos com valores válidos. As calorias precisam ser maiores que zero.';
+      error.classList.add('show');
+      result.classList.remove('show');
+      return;
+    }
+
+    const proteinKcal = protein * 4;
+    const fatKcal = fat * 9;
+    const carbKcal = calories - proteinKcal - fatKcal;
+    if (carbKcal < 0) {
+      error.textContent = 'As calorias de proteínas e gorduras já ultrapassam sua meta. Aumente a meta calórica ou ajuste os valores de macros.';
+      error.classList.add('show');
+      result.classList.remove('show');
+      return;
+    }
+
+    error.classList.remove('show');
+    result.classList.add('show');
+    document.getElementById('carbValue').textContent = fmt(carbKcal / 4);
+    document.getElementById('proteinKcal').textContent = fmt(proteinKcal) + ' kcal';
+    document.getElementById('fatKcal').textContent = fmt(fatKcal) + ' kcal';
+    document.getElementById('carbKcal').textContent = fmt(carbKcal) + ' kcal';
+  });
+
+  document.getElementById('reset').addEventListener('click', function() {
+    caloriesInput.value = 1600;
+    proteinInput.value = 100;
+    fatInput.value = 50;
+    form.requestSubmit();
+  });
+
+  form.requestSubmit();
+</script>
+</body>
+</html>
